@@ -12,13 +12,15 @@
 #include <fstream>
 #include <math.h>
 #include <vector>
-#include "map.h"
+#include "../map/Map.h"
 
 // for portability of M_PI (Vis Studio, MinGW, etc.)
 #ifndef M_PI
 const double M_PI = 3.14159265358979323846;
 #endif
-
+#ifndef EPSILON
+const double EPSILON = 1.E-20;
+#endif
 /*
  * Struct representing one position/control measurement.
  */
@@ -49,13 +51,45 @@ struct LandmarkObs {
 };
 
 /*
+ * Computes the square of x
+ * @param x
+ */
+inline double square(double x) {
+	return x * x;
+}
+
+/*
+ * Computes the square of the Euclidean distance between two 2D points.
+ * @param (x1,y1) x and y coordinates of first point
+ * @param (x2,y2) x and y coordinates of second point
+ * @output Euclidean distance between two 2D points
+ */
+inline double dist2(double x1, double y1, double x2, double y2) {
+	return square(x2 - x1) + square(y2 - y1);
+}
+
+/*
  * Computes the Euclidean distance between two 2D points.
  * @param (x1,y1) x and y coordinates of first point
  * @param (x2,y2) x and y coordinates of second point
  * @output Euclidean distance between two 2D points
  */
 inline double dist(double x1, double y1, double x2, double y2) {
-	return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+	return sqrt(dist2(x1, y1, x2, y2));
+}
+
+/**
+ * Normalize the angle to be in [-PI, PI)
+ */ 
+inline double normalizeAngle(double a) {
+	double result = fmod(a, 2.0 * M_PI);
+	if (result > M_PI) {
+		result = result - 2.0 * M_PI;
+	}
+	else if (result < -M_PI) {
+		result = result + 2.0 * M_PI;
+	}
+	return result;
 }
 
 inline double * getError(double gt_x, double gt_y, double gt_theta, double pf_x, double pf_y, double pf_theta) {
