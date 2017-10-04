@@ -33,7 +33,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 								i,
 								x + distribution_x(generator), 
 								y + distribution_y(generator),
-								theta + normalizeAngle(distribution_theta(generator)));
+								theta + distribution_theta(generator));
     particles.push_back(p);
   }
   is_initialized = true;
@@ -56,7 +56,7 @@ void ParticleFilter::prediction(double delta_t, double velocity, double yaw_rate
       particle.y += velocity * sin(particle.theta) + distribution_y(generator);
     }
     
-    particle.theta = new_yaw + normalizeAngle(distribution_theta(generator));
+    particle.theta = new_yaw + distribution_theta(generator);
   }
 }
 
@@ -89,7 +89,7 @@ void ParticleFilter::updateWeights(
       double dist;
       int searched;
       searches++;
-      std::tie(nearest, dist, searched) = partition.FindNearest(x, y);
+      std::tie(nearest, dist, searched) = partition.findNearest(x, y);
       if (nearest) {  // we have found one
         this->searched += searched;
 #ifdef VERBOSE_OUT
@@ -101,7 +101,7 @@ void ParticleFilter::updateWeights(
         // Compute the probability according to the distance deviation between the nearest landmark and the
         // particle's "observation". However, when there is a bigger deviation, the probability may become
         // very low, and results in 0 weights for all particles. When this happen, the filter will not
-        // be able to produce useful result. To avoid this problem, we flatten the distribution be an order
+        // be able to produce useful result. To avoid this problem, we flatten the distribution by an order
         // of magnitude - by dividing the exponent by 10. This is fine since weights are relative.
         double p = 0.5/(M_PI*std_landmark[0]*std_landmark[1] * 
 									 exp((square(dx/std_landmark[0]) + square(dy/std_landmark[1]))/20));

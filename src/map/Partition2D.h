@@ -4,7 +4,7 @@
 #include <vector>
 #include <tuple>
 #include <iostream>
-#include <assert.h> 
+#include <assert.h>
 #include "../utils/helper_functions.h"
 #include "Map.h"
 
@@ -49,7 +49,7 @@ template<typename T> class Partition2D {
      * @param cell_size the width and height of cells
      * @param max_dist the maximum distance to search
      */ 
-    void Initialize(float x0, float y0, float x1, float y1, float cell_size, float max_dist) {
+    void initialize(float x0, float y0, float x1, float y1, float cell_size, float max_dist) {
       world_x0 = x0;
       world_y0 = y0;
       world_x1 = x1;
@@ -67,7 +67,7 @@ template<typename T> class Partition2D {
     /**
      * Clear the partition
      */ 
-    void Clear() {
+    void clear() {
       for (int i = 0; i < cells.size(); i++) {
         if (cells[i]) {
           delete cells[i];
@@ -83,7 +83,7 @@ template<typename T> class Partition2D {
      * @param max_dist the distance threshold, after that, the search will give up
      * @return pointer to the closest object or null if none is found
      */  
-    std::tuple<T*, double, int> FindNearest(double x, double y) const {
+    std::tuple<T*, double, int> findNearest(double x, double y) const {
       int cx0 = (x - world_x0) / cell_size;
       int cy0 = (y - world_y0) / cell_size;
       int cx1 = cx0 + 1;
@@ -127,7 +127,7 @@ template<typename T> class Partition2D {
     /** Add a point object. A point object has x and y coordinate, and provides accessor x() and y().
      * @param object pointer to the object
      */ 
-    void AddPointObject(T *object) {
+    void addPointObject(T *object) {
       int idx_x = (object->x() - world_x0) / cell_size;
       int idx_y = (object->y() - world_y0) / cell_size;
       int index = cellIndex(idx_x, idx_y);
@@ -140,9 +140,9 @@ template<typename T> class Partition2D {
     /** Add a point objects. A point object has x and y coordinate, and provides accessor x() and y().
      * @param object pointer to the object
      */ 
-    void AddPointObjects(std::vector<T> &objects) {
+    void addPointObjects(std::vector<T> &objects) {
       for (int i = 0; i < objects.size(); i++) {
-        AddPointObject(&objects[i]);
+        addPointObject(&objects[i]);
       }
     }
 };

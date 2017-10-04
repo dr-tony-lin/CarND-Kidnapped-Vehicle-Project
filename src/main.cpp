@@ -107,9 +107,9 @@ int main(int argc, char* argv[]) {
   cout << "Landmarks: " << map.landmark_list.size() << endl;
 
   // Initialize the space partition
-  partition.Initialize(x0-1, y0-1, x1+1, y1+1, 5, 50);
+  partition.initialize(x0-1, y0-1, x1+1, y1+1, 5, 50);
   // Partition the map
-  partition.AddPointObjects(map.landmark_list);
+  partition.addPointObjects(map.landmark_list);
 
 #ifdef TEST_PARTITION
   // Test the 2D space partition algorithm
@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     int searched;
 
     // Find each landmarks from the landmarks location
-    std::tie(nearest, dist, searched) = partition.FindNearest(it->x(), it->y());
+    std::tie(nearest, dist, searched) = partition.findNearest(it->x(), it->y());
     if (nearest) {
       if (nearest->id() != it->id()) {
         cout << "Error finding landmark, is " << it->id() << "(" << it->x() << "," << it->y() << ") but got: "
@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Find each landmarks from the landmarks's nearby location.
-    std::tie(nearest, dist, searched) = partition.FindNearest(it->x() + 20, it->y() + 10);
+    std::tie(nearest, dist, searched) = partition.findNearest(it->x() + 20, it->y() + 10);
     if (nearest) {
       if (nearest->id() != it->id()) {
         cout << "Finding landmark at " << "(" << (it->x() + 20) << "," << (it->y() + 10) << ") got: "
@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
           }
           cout << "highest w " << highest_weight << endl;
           cout << "average w " << weight_sum / num_particles << endl;
-          cout << "average object searched " << pf.averageSearch() << endl;
+          cout << "average landmark searched per observation: " << pf.averageSearch() << endl;
 
           json msgJson;
           msgJson["best_particle_x"] = best_particle->x;
