@@ -4,16 +4,16 @@
 
 ## Content of the Submission and Usage
 This submission includes the following c++ files:
-* main.cpp: the main function that communicate with the simulator and drive the estimation process using UKF.
-* filter/ParticleFilter.h, filter/ParticleFilter.cpp: contains the particle filter implementation
+* main.cpp: the main function that communicates with the simulator and drive the estimation process using UKF.
+* filter/ParticleFilter.h, filter/ParticleFilter.cpp: contain the particle filter implementation
 * utils/helper_functions.h: contains some helper functions
-* map/Map.h.h defines landmark map
-* map/Partition2D.h contain an implementation of a 2D partition for speeding up finds of nearest landmarks.
+* map/Map.h defines landmark map
+* map/Partition2D.h contains an implementation of a 2D partition for speeding up finds of nearest landmarks.
 
 ### Usage
-By default, the program will use 1000 particles. However, it can be launched with different particles and noise with:
+By default, the program will use 1000 particles. However, it can be launched with different number of particles and noise:
 
-    ./particle_filter [-parts number] [-stdgps number number number] [-stdland| number number]
+    ./particle_filter [-parts number] [-stdgps x y yaw] [-stdland| x y]
 
 Where the command line options are described as follows:
 
@@ -27,11 +27,11 @@ To start the simulator:
 
 #### On Windows
 
-    term2_sim9.exe path_to_obj_pose-laser-radar-synthetic-input.txt
+    term2_sim9.exe
 
 #### Other platforms:
 
-    ./term2_sim9 path_to_obj_pose-laser-radar-synthetic-input.txt
+    ./term2_sim9
 
 #### Repeat simulations
 The program can run one simulation only, it needs to be restarted in order to restart a simulation. 
@@ -47,7 +47,7 @@ cmake ..
 make
 ```
 
-The program can be built to output more information for disgnosis purpose by defining **VERBOSE_OUT** macro.
+The program can be built to output more information for disgnosis purposes by defining **VERBOSE_OUT** macro.
 In addition, the program can be built to perform sanity tests on the 2D partitioning algorithm by defining **TEST_PARTITION** macro.
 
 #### Build API Documentation
@@ -82,8 +82,7 @@ The API documentation for ParticleFilter can be found [here](api/html/classParti
 During the initialization process, the **init()** method is invoked to create a set of particles with their x, y location and yaw angle set to the initial GPS reading perturbed with some random noise according to the GPS noise settings.
 
 ### Prediction
-During the prediction stage, each particle's location and yaw are updated according to the delta time, velocity, and yaw rate.
-The new location and yaw angle are then perturbed according to the GPS noise settings.
+During the prediction stage, each particle's location and yaw are updated according to the delta time, velocity, and yaw rate. The new location and yaw angle are then perturbed according to the GPS noise settings.
 
 **0 Yaw Rate**
 0 yaw rate needs to be handled differently to avoid division by 0.
@@ -91,10 +90,14 @@ The new location and yaw angle are then perturbed according to the GPS noise set
 ### Update Weights
 In the update stage, weights of each particle is updated in the **updateWeights()** method. It first converts each observation's coordinate from the vehicle's coordinate system to the map's coordinate system. The it use Partition2D to find the nearest landmark for each observation.
 
-Then it computes the probability of each observation according to the distance deviation between the nearest landmark and the observation. However, when the deviation is large, say 2 or more, the probability may become
-very low, and result in 0 weights. When this happen for all particles, the filter will not be able to produce useful result. Since weights are relative, we could avoid this problem by flattening the distribution.  In the implementation, the exponent of the Gaussian distribution is divided by 10, that is I flatten the distribution by an order of magnitude.
+Then it computes the probability of each observation according to the distance deviation between the nearest landmark and the observation.
 
 Finally the weight of each particle is obtained as the product of the probabilities of all the observations obtained above.
+
+#### Handling 0 weights
+When the deviation is large, say 2 or more, the probability may become very low, and can result in 0 weights. When this happen to all particles, the filter will fail to produce useful result. This was observed in my early tests, and the vehicle was able to escape eventually.
+
+Fortunately, since weights are relative, we could avoid this problem by flattening the distribution. In the implementation, I divide the exponent of the Gaussian distribution by 10, that is I flatten the distribution by an order of magnitude.
 
 ### Resampling
 After the weight of each particle is updated, we resample the particles according to their weights.
