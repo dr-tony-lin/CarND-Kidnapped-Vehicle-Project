@@ -7,8 +7,6 @@
 
 using namespace std;
 
-#define N_PARTICLES 800
-
 // for convenience
 using json = nlohmann::json;
 
@@ -27,7 +25,7 @@ std::string hasData(std::string s) {
   return "";
 }
 
-int main() {
+int main(int argc, char* argv[]) {
   uWS::Hub h;
   Partition2D<Map::single_landmark_s> partition;
 
@@ -38,8 +36,56 @@ int main() {
   double sigma_pos[3] = {
       0.3, 0.3,
       0.01};  // GPS measurement uncertainty [x [m], y [m], theta [rad]]
+  
   double sigma_landmark[2] = {
       0.3, 0.3};  // Landmark measurement uncertainty [x [m], y [m]]
+
+  int nParticles = 1000;
+  
+  // Process command line options
+  for (int i = 1; i < argc; i++) {
+    if (std::string((argv[i])) == "-parts") { // Set the number of particles
+      if (sscanf(argv[++i], "%d", &nParticles) != 1) {
+        std::cerr << "Invalid number of particles: " << argv[i] << std::endl;
+        exit(-1);
+      }
+      if (nParticles <= 0) {
+        std::cerr << "Invalid number of particles: " << argv[i] << std::endl;
+        exit(-1);
+      }
+    } else if (std::string((argv[i])) == "-stdgps") { // set std GPS deviation
+      if (sscanf(argv[++i], "%lf", &sigma_pos[0]) != 1) {
+        std::cerr << "Invalid GPS standard deviation x: " << argv[i] << std::endl;
+        exit(-1);
+      }
+      if (sscanf(argv[++i], "%lf", &sigma_pos[1]) != 1) {
+        std::cerr << "Invalid GPS standard deviation y: " << argv[i] << std::endl;
+        exit(-1);
+      }
+      if (sscanf(argv[++i], "%lf", &sigma_pos[2]) != 1) {
+        std::cerr << "Invalid GPS standard deviation yaw: " << argv[i] << std::endl;
+        exit(-1);
+      }
+      // Make sure std yaw deviation is between 0 and 2PI
+      if (sigma_pos[2] > M_PI * 2) {
+        sigma_pos[2] = M_PI * 2;
+      } else if (sigma_pos[2] < 0) {
+        sigma_pos[2] = 0;
+      }
+    } else if (std::string((argv[i])) == "-stdland") { // set standard landmark measurement deviation
+      if (sscanf(argv[++i], "%lf", &sigma_landmark[0]) != 1) {
+        std::cerr << "Invalid landmark standard deviation x: " << argv[i] << std::endl;
+        exit(-1);
+      }
+      if (sscanf(argv[++i], "%lf", &sigma_landmark[1]) != 1) {
+        std::cerr << "Invalid landmark standard deviation y: " << argv[i] << std::endl;
+        exit(-1);
+      }
+    } else {
+      std::cerr << "Unknown option: " << argv[i] << std::endl;
+      exit(-1);
+    }
+  }
 
   // Read map data
   Map map;
@@ -57,19 +103,22 @@ int main() {
     y1 = max(y1, it->y());
   }
 
-  #ifdef VERBOSE_OUT
   cout << "World: " << x0 << ", " << y0 << ", " << x1 << ", " << y1 << endl;
-  #endif 
+  cout << "Landmarks: " << map.landmark_list.size() << endl;
+
   // Initialize the space partition
   partition.Initialize(x0-1, y0-1, x1+1, y1+1, 5, 50);
   // Partition the map
   partition.AddPointObjects(map.landmark_list);
-#define TEST_PARTITION
+
 #ifdef TEST_PARTITION
+  // Test the 2D space partition algorithm
   for (auto it = map.landmark_list.begin(); it != map.landmark_list.end(); it++) {
     Map::single_landmark_s* nearest;
     double dist;
     int searched;
+
+    // Find each landmarks from the landmarks location
     std::tie(nearest, dist, searched) = partition.FindNearest(it->x(), it->y());
     if (nearest) {
       if (nearest->id() != it->id()) {
@@ -83,6 +132,8 @@ int main() {
     else {
       cout << "Error! landmark not found: " << it->id() << "(" << it->x() << "," << it->y() << ")" << endl;
     }
+
+    // Find each landmarks from the landmarks's nearby location.
     std::tie(nearest, dist, searched) = partition.FindNearest(it->x() + 20, it->y() + 10);
     if (nearest) {
       if (nearest->id() != it->id()) {
@@ -97,7 +148,7 @@ int main() {
 #endif
 
   // Create particle filter
-  ParticleFilter pf(N_PARTICLES);
+  ParticleFilter pf(nParticles);
 
   h.onMessage([&pf, &partition, &delta_t, &sensor_range, &sigma_pos, &sigma_landmark](
       uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
@@ -183,6 +234,7 @@ int main() {
           }
           cout << "highest w " << highest_weight << endl;
           cout << "average w " << weight_sum / num_particles << endl;
+          cout << "average object searched " << pf.averageSearch() << endl;
 
           json msgJson;
           msgJson["best_particle_x"] = best_particle->x;

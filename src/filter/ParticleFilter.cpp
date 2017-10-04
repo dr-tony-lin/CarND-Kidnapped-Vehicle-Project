@@ -14,8 +14,8 @@
 #include <sstream>
 #include <string>
 #include <tuple>
-
 #include "ParticleFilter.h"
+
 using namespace std;
 
 std::default_random_engine ParticleFilter::generator;
@@ -44,13 +44,14 @@ void ParticleFilter::prediction(double delta_t, double velocity, double yaw_rate
   for (int i = 0; i < num_particles; i++) {
     Particle& particle = particles[i];
     double new_yaw = particle.theta + yaw_rate * delta_t;
-    if (fabs(yaw_rate) > EPSILON) {
+    // We need to habdle the situation when yaw rate is 0
+    if (fabs(yaw_rate) > EPSILON) { // yaw rate is not 0
       particle.x += velocity / yaw_rate * (sin(new_yaw) - sin(particle.theta)) +
                     distribution_x(generator);
       particle.y += velocity / yaw_rate * (cos(particle.theta) - cos(new_yaw)) +
                     distribution_y(generator);
     }
-    else {
+    else { // yaw rate is 0
       particle.x += velocity * cos(particle.theta) + distribution_x(generator);
       particle.y += velocity * sin(particle.theta) + distribution_y(generator);
     }
@@ -87,15 +88,21 @@ void ParticleFilter::updateWeights(
       Map::single_landmark_s* nearest;
       double dist;
       int searched;
+      searches++;
       std::tie(nearest, dist, searched) = partition.FindNearest(x, y);
-
       if (nearest) {  // we have found one
+        this->searched += searched;
 #ifdef VERBOSE_OUT
         std::cout << "Found " << nearest->id() << "(" << nearest->x() << "," << nearest->y() << "), distance: " 
                   << dist << ", searched: " << searched << std::endl;
 #endif
         double dx = x - nearest->x();
         double dy = y - nearest->y();
+        // Compute the probability according to the distance deviation between the nearest landmark and the
+        // particle's "observation". However, when there is a bigger deviation, the probability may become
+        // very low, and results in 0 weights for all particles. When this happen, the filter will not
+        // be able to produce useful result. To avoid this problem, we flatten the distribution be an order
+        // of magnitude - by dividing the exponent by 10. This is fine since weights are relative.
         double p = 0.5/(M_PI*std_landmark[0]*std_landmark[1] * 
 									 exp((square(dx/std_landmark[0]) + square(dy/std_landmark[1]))/20));
 				weight *= p;
@@ -113,7 +120,7 @@ void ParticleFilter::updateWeights(
 
 void ParticleFilter::resample() {
   // Resample particles with replacement with probability proportional to
-	// their weight.
+  // their weight.
 	std::discrete_distribution<> distribution(weights.begin(), weights.end());
 	std::vector<Particle> samples;
 	for (int i = 0; i < num_particles; i++) {

@@ -2,12 +2,12 @@ project(PARTICLE_FILTER)
 
 cmake_minimum_required (VERSION 3.5)
 
-add_definitions(-std=c++11 -g)
+add_definitions(-std=c++11)
 
 set(CXX_FLAGS "-Wall -g")
 set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
 
-set(sources src/filter/ParticleFilter.cpp src/main.cpp)
+set(sources src/filter/ParticleFilter.cpp src/main.cpp )
 include_directories(libs)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
@@ -21,8 +21,8 @@ link_directories(/usr/local/Cellar/libuv/1.11.0/lib)
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
 
 
-add_executable(pf ${sources})
+add_executable(particle_filter ${sources})
 
 
-target_link_libraries(pf z ssl uv uWS)
+target_link_libraries(particle_filter z ssl uv uWS)
 

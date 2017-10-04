@@ -19,7 +19,7 @@
 const double M_PI = 3.14159265358979323846;
 #endif
 #ifndef EPSILON
-const double EPSILON = 1.E-20;
+const double EPSILON = 1.E-6;
 #endif
 /*
  * Struct representing one position/control measurement.

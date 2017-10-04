@@ -53,6 +53,9 @@ class ParticleFilter {
 	// Flag, if filter is initialized
 	bool is_initialized;
 	
+	int searches = 0;
+	int searched = 0;
+
 	// Vector of weights of all particles
 	std::vector<double> weights;
 
@@ -62,7 +65,6 @@ class ParticleFilter {
   std::normal_distribution<double> distribution_theta;
 	
 public:
-	
 	// Set of current particles
 	std::vector<Particle> particles;
 
@@ -125,6 +127,13 @@ public:
 	 */
 	const bool initialized() const {
 		return is_initialized;
+	}
+
+	float averageSearch() {
+		if (searches) {
+			return float(searched) / searches;
+		}
+		return 0;
 	}
 };
 
