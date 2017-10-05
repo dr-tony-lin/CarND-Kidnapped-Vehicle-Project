@@ -74,6 +74,7 @@ void ParticleFilter::updateWeights(
     double sin_theta = sin(particle.theta);
     double cos_theta = cos(particle.theta);
     double weight = 1.;
+    double c1 = 0.5/(M_PI*std_landmark[0]*std_landmark[1]);
     for (auto it = observations.begin();
          it != observations.end(); it++) {
       const LandmarkObs& obs = *it;
@@ -90,7 +91,7 @@ void ParticleFilter::updateWeights(
       int searched;
       searches++;
       std::tie(nearest, dist, searched) = partition.findNearest(x, y);
-      if (nearest) {  // we have found one
+      if (nearest && dist < sensor_range) {  // we have found one
         this->searched += searched;
 #ifdef VERBOSE_OUT
         std::cout << "Found " << nearest->id() << "(" << nearest->x() << "," << nearest->y() << "), distance: " 
@@ -103,14 +104,11 @@ void ParticleFilter::updateWeights(
         // very low, and results in 0 weights for all particles. When this happen, the filter will not
         // be able to produce useful result. To avoid this problem, we flatten the distribution by an order
         // of magnitude - by dividing the exponent by 10. This is fine since weights are relative.
-        double p = 0.5/(M_PI*std_landmark[0]*std_landmark[1] * 
-									 exp((square(dx/std_landmark[0]) + square(dy/std_landmark[1]))/20));
+        double p = c1 / exp((square(dx/std_landmark[0]) + square(dy/std_landmark[1]))/20);
 				weight *= p;
 				particle.associations.push_back(nearest->id());
 				particle.sense_x.push_back(x);
 				particle.sense_y.push_back(y);
-      } else {
-        weight *= 1E-10;
       }
     }
     particle.weight = weight;
