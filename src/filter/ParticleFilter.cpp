@@ -87,11 +87,11 @@ void ParticleFilter::updateWeights(
       double x = particle.x + obs.x * cos_theta - obs.y * sin_theta;
       double y = particle.y + obs.x * sin_theta + obs.y * cos_theta;
       Map::single_landmark_s* nearest;
-      double dist;
+      double distance;
       int searched;
       searches++;
-      std::tie(nearest, dist, searched) = partition.findNearest(x, y);
-      if (nearest && dist < sensor_range) {  // we have found one
+      std::tie(nearest, distance, searched) = partition.findNearest(x, y);
+      if (nearest && dist(particle.x, particle.y, nearest->x(), nearest->y()) < sensor_range) {  // we have found one
         this->searched += searched;
 #ifdef VERBOSE_OUT
         std::cout << "Found " << nearest->id() << "(" << nearest->x() << "," << nearest->y() << "), distance: " 
