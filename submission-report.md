@@ -1,4 +1,4 @@
-# Extended Kalman Filter Project
+# Extended Kidnapped Vehicle Project
 
 [video1]: ./video1.mp4
 
